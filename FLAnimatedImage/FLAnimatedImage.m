@@ -174,7 +174,15 @@ static NSHashTable *allAnimatedImagesWeak;
 
 - (instancetype)initWithAnimatedGIFData:(NSData *)data
 {
-    return [self initWithAnimatedGIFData:data optimalFrameCacheSize:0 predrawingEnabled:YES];
+    uint8_t c;
+    [data getBytes:&c length:1];
+    // printf("---- 检查字符: %x --- \r\n",c);
+    if(c == 0x47){
+        return [self initWithAnimatedGIFData:data optimalFrameCacheSize:0 predrawingEnabled:YES];
+    }else{
+        return [self initWithNormalImage:[UIImage imageWithData:data]];
+    }
+
 }
 
 - (instancetype)initWithAnimatedGIFData:(NSData *)data optimalFrameCacheSize:(NSUInteger)optimalFrameCacheSize predrawingEnabled:(BOOL)isPredrawingEnabled
@@ -185,9 +193,10 @@ static NSHashTable *allAnimatedImagesWeak;
         FLLog(FLLogLevelError, @"No animated GIF data supplied.");
         return nil;
     }
-    
+
     self = [super init];
     if (self) {
+
         // Do one-time initializations of `readonly` properties directly to ivar to prevent implicit actions and avoid need for private `readwrite` property overrides.
         
         // Keep a strong reference to `data` and expose it read-only publicly.
@@ -352,6 +361,22 @@ static NSHashTable *allAnimatedImagesWeak;
     return self;
 }
 
+-(instancetype)initWithNormalImage:(UIImage *)theImage
+{
+    self = [super init];
+    if (self) {
+            _posterImage = theImage;
+                // Set its size to proxy our size.
+            _size = _posterImage.size;
+                // Remember index of poster image so we never purge it; also add it to the cache.
+            _posterImageFrameIndex = 0;
+            _frameCount = 1;
+
+            [self.cachedFramesForIndexes setObject:self.posterImage forKey:@(self.posterImageFrameIndex)];
+            [self.cachedFrameIndexes addIndex:self.posterImageFrameIndex];
+    }
+    return self;
+}
 
 + (instancetype)animatedImageWithGIFData:(NSData *)data
 {
@@ -812,5 +837,32 @@ static FLLogLevel _logLevel;
     return [NSObject instanceMethodSignatureForSelector:@selector(init)];
 }
 
+    //通过图片Data数据第一个字节 来获取图片扩展名
++ (BOOL)checkGifImageData:(NSData *)data {
+    uint8_t c;
+    [data getBytes:&c length:1];
+    return (c == 0x47);
+
+//    switch (c) {
+//        case 0xFF:
+//        return @"jpeg";
+//        case 0x89:
+//        return @"png";
+//        case 0x47:
+//        return @"gif";
+//        case 0x49:
+//        case 0x4D:
+//        return @"tiff";
+//        case 0x52:
+//        if ([data length] < 12) {
+//            return nil;
+//        }
+//        NSString *testString = [[NSString alloc] initWithData:[data subdataWithRange:NSMakeRange(0, 12)] encoding:NSASCIIStringEncoding];
+//        if ([testString hasPrefix:@"RIFF"] && [testString hasSuffix:@"WEBP"]) {
+//            return @"webp";
+//        }
+//        return nil;
+//    }
+}
 
 @end
