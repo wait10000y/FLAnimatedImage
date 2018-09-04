@@ -1,3 +1,12 @@
+
+修改支持 普通类型图片
+
+调用接口: - (instancetype)initWithAnimatedGIFData:(NSData *)data; // 有判断代码
+
+或者 直接调用: -(instancetype)initWithNormalImage:(UIImage *)theImage;
+
+============= 以上修改 =============
+
 FLAnimatedImage is a performant animated GIF engine for iOS:
 
 - Plays multiple GIFs simultaneously with a playback speed comparable to desktop browsers
